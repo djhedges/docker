@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  garage: &base
+    image: djhedges/docker:motion
+    volumes:
+      - /glusterfs/coen/motion:/var/lib/motion
+    configs:
+      - source: motion_config
+        target: /etc/motion/motion.conf
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.platform.arch != armv7l]  # Avoid pi2
+        preferences: 
+          - spread: node.labels.loc
+            #resources:
+            #  limits:
+            #    cpus: '1.00'
+            #    memory: '750M'
+            #  reservations:
+            #    cpus: '0.5'
+            #    memory: '600M'
+    configs:
+      - source: motion_config
+        target: /etc/motion/motion.conf
+      - source: garage_config
+        target: /etc/motion/conf.d/camera.conf
+      - source: garage_pgm
+        target: /etc/motion/conf.d/garage.pgm
+
+  driveway:
+    <<: *base
+    configs:
+      - source: motion_config
+        target: /etc/motion/motion.conf
+      - source: driveway_config
+        target: /etc/motion/conf.d/camera.conf
+      - source: driveway_pgm
+        target: /etc/motion/conf.d/driveway.pgm
+
+  frontdoor:
+    <<: *base
+    configs:
+      - source: motion_config
+        target: /etc/motion/motion.conf
+      - source: frontdoor_config
+        target: /etc/motion/conf.d/camera.conf
+
+  alley:
+    <<: *base
+    configs:
+      - source: motion_config
+        target: /etc/motion/motion.conf
+      - source: alley_config
+        target: /etc/motion/conf.d/camera.conf
+
+configs:
+  motion_config:
+    file: ./motion.conf
+  garage_config:
+    file: ./garage.conf
+  garage_pgm:
+    file: ./garage.pgm
+  driveway_config:
+    file: ./driveway.conf
+  driveway_pgm:
+    file: ./driveway.pgm
+  frontdoor_config:
+    file: ./frontdoor.conf
+  alley_config:
+    file: ./alley.conf
